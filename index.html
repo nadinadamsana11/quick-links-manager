@@ -1,0 +1,520 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shortcuts Manager</title>
+    <style>
+        :root {
+            --win-blue: #0078d4;
+            --win-bg: #0078d4;
+            --win-card: rgba(0, 120, 212, 0.4);
+            --win-border: rgba(255, 255, 255, 0.3);
+            --text-main: #323130;
+            --shadow: 0 12px 30px rgba(0,0,0,0.3);
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background-color: var(--win-bg);
+            color: var(--text-main);
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        /* Desktop Shortcuts Area */
+        #desktop {
+            flex: 1;
+            padding: 40px;
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+            grid-auto-rows: min-content;
+            gap: 25px;
+            overflow-y: auto;
+        }
+
+        /* Dock Area for Folders */
+        #dock-container {
+            height: 120px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding-bottom: 20px;
+        }
+
+        #dock {
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(15px);
+            padding: 10px 20px;
+            border-radius: 24px;
+            display: flex;
+            gap: 15px;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            box-shadow: var(--shadow);
+        }
+
+        .shortcut-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            cursor: pointer;
+            transition: transform 0.1s ease;
+            width: 100px;
+            text-decoration: none;
+        }
+
+        .shortcut-item:hover { transform: scale(1.05); }
+
+        .dock-folder {
+            width: 70px;
+        }
+
+        .dock-folder:hover {
+            transform: translateY(-5px) scale(1.1);
+        }
+
+        .folder-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.3);
+            border-radius: 14px;
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 3px;
+            padding: 8px;
+            box-sizing: border-box;
+            border: 1px solid rgba(255, 255, 255, 0.4);
+        }
+
+        .mini-icon {
+            background: rgba(255, 255, 255, 0.5);
+            border-radius: 3px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            overflow: hidden;
+        }
+
+        .mini-icon img, .mini-icon svg { width: 80%; height: 80%; }
+
+        .app-icon {
+            width: 65px;
+            height: 65px;
+            background: white;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            border: 1px solid #ddd;
+            overflow: hidden;
+        }
+
+        .app-icon img { width: 42px; height: 42px; object-fit: contain; }
+        .app-icon svg { width: 40px; height: 40px; }
+
+        .item-label {
+            margin-top: 8px;
+            font-size: 12px;
+            font-weight: 500;
+            color: white;
+            text-align: center;
+            width: 100%;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        /* Folder Overlay */
+        .folder-overlay {
+            position: fixed;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(8px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 2000;
+            opacity: 0;
+            transition: opacity 0.1s ease;
+        }
+
+        .folder-overlay.show {
+            display: flex;
+            opacity: 1;
+        }
+
+        .folder-content-box {
+            background: var(--win-card);
+            backdrop-filter: blur(30px);
+            width: 90%;
+            max-width: 600px;
+            min-height: 300px;
+            max-height: 75vh;
+            border-radius: 28px;
+            padding: 30px;
+            border: 1px solid var(--win-border);
+            box-shadow: 0 25px 60px rgba(0,0,0,0.5);
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            transform: none; 
+        }
+
+        .app-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(90px, 1fr));
+            gap: 15px;
+            overflow-y: auto;
+            padding: 10px;
+        }
+
+        .inner-app {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-decoration: none;
+            color: white;
+            padding: 10px;
+            border-radius: 12px;
+            transition: background 0.1s;
+        }
+
+        .inner-app:hover { background: rgba(255,255,255,0.15); }
+
+        /* Context Menu */
+        #contextMenu {
+            position: absolute; display: none; background: white;
+            border: 1px solid #ddd; border-radius: 12px;
+            box-shadow: var(--shadow); z-index: 3000; min-width: 200px;
+            padding: 8px 0;
+        }
+
+        .menu-item { padding: 10px 20px; cursor: pointer; font-size: 14px; display: flex; align-items: center; gap: 10px; color: #333; }
+        .menu-item:hover { background: var(--win-blue); color: white; }
+        .menu-sep { height: 1px; background: #eee; margin: 5px 0; }
+        .menu-header { font-size: 11px; font-weight: bold; padding: 5px 20px; color: #888; text-transform: uppercase; }
+    </style>
+</head>
+<body oncontextmenu="handleRightClick(event)">
+
+<div id="desktop"></div>
+
+<div id="dock-container">
+    <div id="dock"></div>
+</div>
+
+<!-- Folder View -->
+<div id="folderOverlay" class="folder-overlay" onclick="if(event.target === this) closeFolder()">
+    <div class="folder-content-box" oncontextmenu="handleRightClick(event)">
+        <div id="activeFolderName" style="font-size: 22px; font-weight: 600; color: white; margin-bottom: 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.2); padding-bottom: 10px;">Folder</div>
+        <div id="activeFolderGrid" class="app-grid"></div>
+    </div>
+</div>
+
+<div id="contextMenu">
+    <div id="globalOptions">
+        <div class="menu-item" onclick="promptAddLink()">➕ Add New Shortcut</div>
+        <div class="menu-item" onclick="promptAddFolder()">📁 Create New Folder</div>
+        <div class="menu-sep"></div>
+        <div class="menu-header">Settings</div>
+        <div class="menu-item" onclick="reorder('name')">🔤 Sort by Name</div>
+        <div class="menu-item" onclick="reorder('newest')">🕒 Sort by Newest</div>
+    </div>
+    <div id="itemOptions" style="display:none;">
+        <div id="linkOnlyOptions">
+            <div class="menu-item" onclick="handleEditLink()">✏️ Edit Name/URL</div>
+            <div class="menu-item" onclick="handleMoveLink()">🚚 Move to Folder</div>
+        </div>
+        <div id="folderOnlyOptions">
+            <div class="menu-item" onclick="handleRenameFolder()">✏️ Rename Folder</div>
+        </div>
+        <div class="menu-sep"></div>
+        <div class="menu-item" style="color:#d13438" onclick="handleDelete()">🗑️ Delete Item</div>
+    </div>
+</div>
+
+<script>
+    let state = {
+        folders: ["General"],
+        links: [],
+        target: null,
+        sortMode: 'newest'
+    };
+
+    const defaultIcons = [
+        `<svg viewBox="0 0 24 24" fill="#0078d4"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+        `<svg viewBox="0 0 24 24" fill="#d13438"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+        `<svg viewBox="0 0 24 24" fill="#107c10"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+        `<svg viewBox="0 0 24 24" fill="#ffaa00"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`,
+        `<svg viewBox="0 0 24 24" fill="#881798"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>`
+    ];
+
+    function init() {
+        const saved = localStorage.getItem('win_shortcuts_v10');
+        if (saved) state = JSON.parse(saved);
+        render();
+        document.addEventListener('click', () => document.getElementById('contextMenu').style.display = 'none');
+    }
+
+    function save() { localStorage.setItem('win_shortcuts_v10', JSON.stringify(state)); }
+
+    async function fetchFaviconAsBase64(url) {
+        try {
+            const domain = new URL(url).hostname;
+            const iconUrl = `https://www.google.com/s2/favicons?domain=${domain}&sz=128`;
+            const response = await fetch(iconUrl);
+            if (!response.ok) return null;
+            const blob = await response.blob();
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onloadend = () => resolve(reader.result);
+                reader.readAsDataURL(blob);
+            });
+        } catch (e) { return null; }
+    }
+
+    function handleRightClick(e) {
+        const overlay = document.getElementById('folderOverlay');
+        const isFolderOpen = overlay.classList.contains('show');
+        
+        if (isFolderOpen && e.target === overlay) {
+            e.preventDefault();
+            return;
+        }
+
+        const item = e.target.closest('.shortcut-item') || e.target.closest('.inner-app');
+
+        if (isFolderOpen && !item) {
+            e.preventDefault();
+            return;
+        }
+
+        e.preventDefault();
+        e.stopPropagation();
+
+        const menu = document.getElementById('contextMenu');
+        menu.style.display = 'block';
+        menu.style.left = e.pageX + 'px';
+        menu.style.top = e.pageY + 'px';
+
+        if (item) {
+            const id = item.dataset.id;
+            const type = item.dataset.type;
+            state.target = { type, id: type === 'link' ? parseInt(id) : id };
+            document.getElementById('globalOptions').style.display = 'none';
+            document.getElementById('itemOptions').style.display = 'block';
+            
+            if (type === 'link') {
+                document.getElementById('linkOnlyOptions').style.display = 'block';
+                document.getElementById('folderOnlyOptions').style.display = 'none';
+            } else {
+                document.getElementById('linkOnlyOptions').style.display = 'none';
+                document.getElementById('folderOnlyOptions').style.display = 'block';
+            }
+        } else {
+            state.target = null;
+            document.getElementById('globalOptions').style.display = 'block';
+            document.getElementById('itemOptions').style.display = 'none';
+        }
+    }
+
+    async function promptAddLink() {
+        const name = prompt("Shortcut Name:");
+        if (!name) return;
+        let url = prompt("URL (e.g., google.com):");
+        if (!url) return;
+        if (!url.startsWith('http')) url = 'https://' + url;
+
+        const foldersList = ["Desktop", ...state.folders];
+        const folderChoice = prompt("Select Folder Location:\n" + foldersList.map((f, i) => `${i}: ${f}`).join("\n"), "0");
+        if (folderChoice === null) return; // User cancelled
+        
+        const selected = foldersList[parseInt(folderChoice)] || "Desktop";
+        const iconBase64 = await fetchFaviconAsBase64(url);
+        
+        state.links.push({
+            id: Date.now(),
+            name, url,
+            folder: selected === "Desktop" ? null : selected,
+            icon: iconBase64,
+            defaultIdx: Math.floor(Math.random() * defaultIcons.length)
+        });
+        save(); render();
+    }
+
+    function promptAddFolder() {
+        const name = prompt("Folder Name:");
+        if (name && !state.folders.includes(name)) {
+            state.folders.push(name);
+            save(); render();
+        }
+    }
+
+    function reorder(mode) {
+        state.sortMode = mode;
+        if (mode === 'name') {
+            state.links.sort((a, b) => a.name.localeCompare(b.name));
+        } else {
+            state.links.sort((a, b) => b.id - a.id);
+        }
+        save(); render();
+    }
+
+    function handleEditLink() {
+        if (!state.target || state.target.type !== 'link') return;
+        const link = state.links.find(l => l.id === state.target.id);
+        const newName = prompt("Edit Name:", link.name);
+        if (newName === null) return;
+        let newUrl = prompt("Edit URL:", link.url);
+        if (newUrl === null) return;
+        if (!newUrl.startsWith('http')) newUrl = 'https://' + newUrl;
+        
+        link.name = newName;
+        link.url = newUrl;
+        save(); render();
+        refreshOpenFolder();
+    }
+
+    function handleMoveLink() {
+        if (!state.target || state.target.type !== 'link') return;
+        const link = state.links.find(l => l.id === state.target.id);
+        const foldersList = ["Desktop", ...state.folders];
+        
+        // Find current location index to show as default
+        const currentFolder = link.folder === null ? "Desktop" : link.folder;
+        const currentIdx = foldersList.indexOf(currentFolder);
+        const defaultChoice = currentIdx !== -1 ? currentIdx.toString() : "0";
+
+        const folderChoice = prompt(
+            "Move to Folder (Enter number):\n" + 
+            foldersList.map((f, i) => `${i}: ${f}`).join("\n"), 
+            defaultChoice
+        );
+        
+        // Fix: If user clicks Cancel (null), do nothing. Do not move to Desktop.
+        if (folderChoice === null) return; 
+
+        const idx = parseInt(folderChoice);
+        if (isNaN(idx) || idx < 0 || idx >= foldersList.length) return;
+
+        const newFolder = foldersList[idx];
+        link.folder = newFolder === "Desktop" ? null : newFolder;
+        
+        save(); render();
+        refreshOpenFolder();
+    }
+
+    function handleRenameFolder() {
+        if (!state.target || state.target.type !== 'folder') return;
+        const folderName = state.target.id;
+        const newName = prompt("Rename Folder:", folderName);
+        if (newName && newName !== folderName) {
+            state.links.forEach(l => { if(l.folder === folderName) l.folder = newName; });
+            const idx = state.folders.indexOf(folderName);
+            state.folders[idx] = newName;
+            save(); render();
+            closeFolder();
+        }
+    }
+
+    function handleDelete() {
+        if (!state.target) return;
+        if (!confirm("Are you sure you want to delete this item?")) return;
+        if (state.target.type === 'link') {
+            state.links = state.links.filter(l => l.id !== state.target.id);
+        } else {
+            state.links = state.links.filter(l => l.folder !== state.target.id);
+            state.folders = state.folders.filter(f => f !== state.target.id);
+        }
+        save(); render();
+        refreshOpenFolder();
+    }
+
+    function refreshOpenFolder() {
+        const overlay = document.getElementById('folderOverlay');
+        if(overlay.classList.contains('show')){
+            const activeFolderName = document.getElementById('activeFolderName').innerText;
+            if(!state.folders.includes(activeFolderName)) closeFolder();
+            else openFolder(activeFolderName);
+        }
+    }
+
+    function openFolder(name) {
+        const overlay = document.getElementById('folderOverlay');
+        const grid = document.getElementById('activeFolderGrid');
+        document.getElementById('activeFolderName').innerText = name;
+        
+        const links = state.links.filter(l => l.folder === name);
+        grid.innerHTML = links.map(l => `
+            <a href="${l.url}" target="_blank" class="inner-app" data-type="link" data-id="${l.id}" onclick="event.stopPropagation()">
+                <div class="app-icon">
+                    ${l.icon ? `<img src="${l.icon}">` : defaultIcons[l.defaultIdx || 0]}
+                </div>
+                <div class="item-label app-label">${l.name}</div>
+            </a>
+        `).join('');
+        
+        overlay.style.display = 'flex';
+        setTimeout(() => overlay.classList.add('show'), 10);
+    }
+
+    function closeFolder() {
+        const overlay = document.getElementById('folderOverlay');
+        overlay.classList.remove('show');
+        setTimeout(() => overlay.style.display = 'none', 150);
+    }
+
+    function render() {
+        const desktop = document.getElementById('desktop');
+        const dock = document.getElementById('dock');
+        desktop.innerHTML = '';
+        dock.innerHTML = '';
+
+        state.links.filter(l => !l.folder).forEach(l => {
+            const div = document.createElement('div');
+            div.className = 'shortcut-item';
+            div.dataset.type = 'link';
+            div.dataset.id = l.id;
+            div.onclick = () => window.open(l.url, '_blank');
+            div.innerHTML = `
+                <div class="app-icon">
+                    ${l.icon ? `<img src="${l.icon}">` : defaultIcons[l.defaultIdx || 0]}
+                </div>
+                <div class="item-label">${l.name}</div>
+            `;
+            desktop.appendChild(div);
+        });
+
+        state.folders.forEach(f => {
+            const links = state.links.filter(l => l.folder === f).slice(0, 4);
+            const div = document.createElement('div');
+            div.className = 'shortcut-item dock-folder';
+            div.dataset.type = 'folder';
+            div.dataset.id = f;
+            div.onclick = () => openFolder(f);
+            div.innerHTML = `
+                <div class="folder-icon">
+                    ${links.map(l => `<div class="mini-icon">
+                        ${l.icon ? `<img src="${l.icon}">` : defaultIcons[l.defaultIdx || 0]}
+                    </div>`).join('')}
+                    ${Array(Math.max(0, 4 - links.length)).fill('<div class="mini-icon"></div>').join('')}
+                </div>
+                <div class="item-label folder-label">${f}</div>
+            `;
+            dock.appendChild(div);
+        });
+    }
+
+    window.onload = init;
+</script>
+
+</body>
+</html>
