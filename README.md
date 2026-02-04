@@ -1,66 +1,39 @@
-Quick Links Manager Pro
+# Shortcuts Manager
 
-A sophisticated, Windows-inspired web application designed to manage web shortcuts and bookmarks with a fluid, desktop-like user interface. This project focuses on delivering a seamless user experience (UX) using modern frontend technologies and efficient local data management.
+Shortcuts Manager is a web application that allows you to manage your frequently used website links easily and attractively. It is designed to provide a native Windows OS desktop experience within your browser.
 
-🚀 Key Features
+## Key Features
 
-Windows-Style Desktop Interface: A familiar UI with a grid-based shortcut layout and a dynamic dock for folder management.
+* **Custom Shortcuts**: Create shortcuts by entering the name and URL of any website you want.
+* **Smart Folders**: Create folders on the desktop or within the Dock to categorize your shortcuts.
+* **Auto Favicon Fetcher**: Automatically retrieves the website's icon (Favicon) once the URL is entered.
+* **Modern UI/UX**: Includes a Glassmorphism-styled Dock and a Windows-like context menu.
+* **Persistent Storage**: Uses `localStorage` technology so your data remains saved even after closing the browser.
+* **Sorting Options**: Organize your items by name (Sort by Name) or by the most recently added (Sort by Newest).
 
-Smart Folder Organization: Users can group related links into folders. Folder icons provide a real-time preview of the contents inside.
+## Built With
 
-Advanced Context Menu: Fully customized right-click menu system for adding, editing, moving, and deleting items without page reloads.
+* **HTML5**: Used for the core structure of the application.
+* **CSS3**: Used for styling and animations, including Flexbox, Grid, and Glassmorphism effects.
+* **JavaScript (Vanilla)**: Used for functionality and data management.
+* **Favicon API**: Used to fetch website icons automatically.
 
-Intelligent Move Logic:
+## How to Use
 
-Context-Aware Selection: When moving a shortcut, the system automatically identifies and pre-selects its current location for better usability.
+* **Add New Shortcut**: Right-click on an empty space on the desktop and select `➕ Add New Shortcut`.
+* **Create a Folder**: Right-click and select `📁 Create New Folder`.
+* **Edit/Delete Shortcut**: Right-click on a specific icon to Rename, Move, or Delete it from the menu.
+* **Move to Folder**: You can move a shortcut into a folder when creating it or by using the `Move to Folder` option.
 
-Safe Transaction: Implements validation logic where the move operation is only finalized upon user confirmation, preventing accidental data loss.
+## Installation
 
-Dynamic Asset Fetching: Automatically retrieves and caches high-quality favicons from external URLs to provide a visual-first browsing experience.
+No additional software is required to run this application.
 
-Performance Optimized: Zero-latency transitions for folder opening and ultra-responsive layout updates.
+1. Download the `index.html` file.
+2. Open it with any modern web browser such as Chrome, Edge, or Firefox.
 
-🛠️ Technical Stack
+> **Note**: Clearing your browser cache may result in the loss of saved data.
 
-This application is built using a "Vanilla" approach to demonstrate deep understanding of core web technologies and performance optimization.
+## License
 
-Frontend: Pure HTML5 and CSS3 using modern design principles such as Glassmorphism, Flexbox, and CSS Grid.
-
-Logic: Vanilla JavaScript (ES6+) for state management, DOM manipulation, and event handling.
-
-Persistence: Utilizes the Web Storage API (LocalStorage) for high-speed, client-side data persistence without the need for a database server.
-
-Iconography: Integration with the Google Favicon API for dynamic resource fetching.
-
-📂 Architecture & Data Flow
-
-State Management: The app maintains a centralized state object that tracks folders and links.
-
-Reactive Rendering: Every state change triggers a optimized render() function that synchronizes the UI with the data model.
-
-Local Persistence: The application implements a "Save-on-Change" pattern, ensuring that user data is persisted to the browser's storage immediately after any modification.
-
-💻 Installation & Deployment
-
-Since this is a static web application, it can be hosted on any environment.
-
-Clone the Repository:
-
-git clone [https://github.com/your-username/quick-links-manager.git](https://github.com/your-username/quick-links-manager.git)
-
-
-Deployment (GitHub Pages):
-
-Upload index.html to your repository.
-
-Navigate to Settings > Pages.
-
-Select the main branch and click Save.
-
-🛡️ Privacy
-
-This application is designed with a Privacy-First approach. No user data, URLs, or personal information is ever transmitted to a server. All data remains strictly within the user's local browser environment.
-
-📄 License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+[MIT](https://choosealicense.com/licenses/mit/)
