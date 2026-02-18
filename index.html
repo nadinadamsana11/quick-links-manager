@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Shortcuts Manager - Ultimate Space Edition</title>
-    <link rel="icon" href="/quick-links-manager/favicon.svg" type="image/x-icon">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -74,6 +73,7 @@
         .modal-overlay {
             background-color: rgba(0, 0, 0, 0.8);
             backdrop-filter: blur(8px);
+            transition: opacity 0.3s ease;
         }
     </style>
 </head>
@@ -150,10 +150,10 @@
         </div>
     </main>
 
-    <!-- Modals (New Space, Settings, Shortcut, Confirm) -->
-    <!-- [All Modals kept same as previous version for consistency] -->
-    <div id="newSpaceModal" class="fixed inset-0 modal-overlay z-[100] hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-sm rounded-3xl p-8">
+    <!-- Modals -->
+    <!-- Modal: New Space -->
+    <div id="newSpaceModal" onclick="closeOnOverlay(event, 'newSpaceModal')" class="fixed inset-0 modal-overlay z-[100] hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-8" onclick="event.stopPropagation()">
             <h2 class="text-xs font-black text-white uppercase tracking-widest mb-6"><i class="fa-solid fa-circle-plus text-blue-500 mr-2"></i>New Space</h2>
             <input type="text" id="spaceNameInput" placeholder="Name..." class="w-full p-4 bg-zinc-900 border border-white/5 text-white rounded-2xl outline-none focus:border-blue-500 text-sm mb-6">
             <div class="flex gap-3">
@@ -163,8 +163,9 @@
         </div>
     </div>
 
-    <div id="spaceSettingsModal" class="fixed inset-0 modal-overlay z-[100] hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-sm rounded-3xl p-8 text-white">
+    <!-- Modal: Settings -->
+    <div id="spaceSettingsModal" onclick="closeOnOverlay(event, 'spaceSettingsModal')" class="fixed inset-0 modal-overlay z-[100] hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-sm rounded-3xl p-8 text-white" onclick="event.stopPropagation()">
             <h2 class="text-xs font-black uppercase mb-6"><i class="fa-solid fa-gear mr-2"></i>Settings</h2>
             <input type="text" id="editSpaceNameInput" class="w-full p-4 bg-zinc-900 border border-white/5 rounded-2xl text-sm mb-6">
             <div class="flex gap-3 mb-6">
@@ -175,9 +176,11 @@
         </div>
     </div>
 
-    <div id="shortcutModal" class="fixed inset-0 modal-overlay z-[100] hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-md rounded-3xl overflow-hidden">
+    <!-- Modal: Add/Edit Shortcut -->
+    <div id="shortcutModal" onclick="closeOnOverlay(event, 'shortcutModal')" class="fixed inset-0 modal-overlay z-[100] hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-md rounded-3xl overflow-hidden" onclick="event.stopPropagation()">
             <div class="p-8 space-y-6">
+                <h2 id="shortcutModalHeader" class="text-xs font-black text-white uppercase tracking-widest">Shortcut Details</h2>
                 <input type="hidden" id="editId">
                 <input type="text" id="siteName" placeholder="Name" class="w-full p-4 bg-zinc-900 border border-white/5 text-white rounded-2xl outline-none text-sm">
                 <input type="text" id="siteUrl" placeholder="URL" class="w-full p-4 bg-zinc-900 border border-white/5 text-white rounded-2xl outline-none text-sm">
@@ -186,8 +189,9 @@
         </div>
     </div>
 
-    <div id="confirmModal" class="fixed inset-0 modal-overlay z-[110] hidden flex items-center justify-center p-4">
-        <div class="glass-panel w-full max-w-xs rounded-3xl p-8 text-center text-white">
+    <!-- Modal: Confirm Delete -->
+    <div id="confirmModal" onclick="closeOnOverlay(event, 'confirmModal')" class="fixed inset-0 modal-overlay z-[110] hidden flex items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-xs rounded-3xl p-8 text-center text-white" onclick="event.stopPropagation()">
             <h2 id="confirmTitle" class="text-sm font-black uppercase">Are you sure?</h2>
             <div class="flex gap-3 mt-8">
                 <button onclick="closeConfirmModal()" class="flex-1 py-3 bg-zinc-800 text-[10px] rounded-xl">CANCEL</button>
@@ -219,10 +223,31 @@
                 renderShortcuts();
             });
 
+            // Handle Esc key to close modals
+            window.addEventListener('keydown', (e) => {
+                if (e.key === 'Escape') {
+                    closeAllModals();
+                }
+            });
+
             window.onclick = (e) => {
-                if (!e.target.closest('.dropdown-container')) document.getElementById('spacesMenu').classList.add('hidden');
+                if (!e.target.closest('.dropdown-container')) {
+                    document.getElementById('spacesMenu').classList.add('hidden');
+                }
             };
         });
+
+        // Close on overlay click
+        function closeOnOverlay(event, modalId) {
+            if (event.target.id === modalId) {
+                document.getElementById(modalId).classList.add('hidden');
+            }
+        }
+
+        function closeAllModals() {
+            const modals = ['newSpaceModal', 'spaceSettingsModal', 'shortcutModal', 'confirmModal'];
+            modals.forEach(id => document.getElementById(id).classList.add('hidden'));
+        }
 
         function initStorage() {
             if (!localStorage.getItem('spaces')) localStorage.setItem('spaces', JSON.stringify([{ id: 'default', name: 'Home' }]));
@@ -273,7 +298,7 @@
 
             container.innerHTML = pageItems.map(item => `
                 <div class="shortcut-card rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer group shadow-sm border border-white/5" onclick="window.open('${item.url}', '_blank')">
-                    <div class="absolute top-2 right-2">
+                    <div class="absolute top-2 right-2 flex gap-1">
                         <button onclick="event.stopPropagation(); openEditModal(${item.id})" class="p-2 text-zinc-600 hover:text-white transition opacity-0 group-hover:opacity-100 bg-black/40 rounded-lg">
                             <i class="fa-solid fa-pen text-[8px]"></i>
                         </button>
@@ -284,7 +309,7 @@
                     <div class="w-10 h-10 rounded-xl bg-white/[0.03] flex items-center justify-center mb-3 group-hover:bg-blue-600/20 transition-all">
                         <i class="fa-solid fa-link text-zinc-600 group-hover:text-blue-500"></i>
                     </div>
-                    <h3 class="font-bold text-zinc-200 text-[10px] uppercase tracking-widest truncate w-full">${item.name}</h3>
+                    <h3 class="font-bold text-zinc-200 text-[10px] uppercase tracking-widest truncate w-full px-2">${item.name}</h3>
                 </div>
             `).join('');
         }
