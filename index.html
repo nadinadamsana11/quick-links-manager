@@ -46,6 +46,26 @@
             background: #1c1c21;
         }
 
+        .shortcut-card.dragging {
+            opacity: 0.5;
+            transform: scale(1.05);
+            border-color: #fbbf24;
+        }
+
+        .shortcut-card.favorite {
+            border-color: #fbbf24;
+        }
+
+        .shortcut-card.favorite::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 2px;
+            background: linear-gradient(90deg, #fbbf24, #f59e0b);
+        }
+
         .dropdown-animate {
             animation: scaleIn 0.2s ease-out;
             transform-origin: top center;
@@ -76,6 +96,56 @@
             backdrop-filter: blur(8px);
             transition: opacity 0.3s ease;
         }
+
+        .search-highlight {
+            background: rgba(59, 130, 246, 0.3);
+            border-radius: 2px;
+        }
+
+        .color-picker-option {
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 2px solid transparent;
+            transition: transform 0.2s;
+        }
+
+        .color-picker-option:hover {
+            transform: scale(1.2);
+        }
+
+        .color-picker-option.selected {
+            border-color: white;
+            box-shadow: 0 0 8px rgba(255,255,255,0.5);
+        }
+
+        .icon-picker-grid {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 8px;
+        }
+
+        .icon-picker-option {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255,255,255,0.05);
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .icon-picker-option:hover {
+            background: rgba(59, 130, 246, 0.3);
+        }
+
+        .icon-picker-option.selected {
+            background: rgba(59, 130, 246, 0.5);
+            border: 2px solid #3b82f6;
+        }
     </style>
 </head>
 <body class="h-screen flex flex-col">
@@ -83,10 +153,15 @@
     <!-- Premium Header -->
     <header class="h-16 border-b border-white/5 bg-zinc-950/70 backdrop-blur-md flex items-center justify-between px-4 sm:px-8 shrink-0 z-40">
         
-        <!-- Left: Time Display -->
+        <!-- Left: Time Display & Search -->
         <div class="flex items-center gap-3 w-1/4">
             <div id="dateTimeDisplay" class="text-[10px] font-bold text-zinc-400 uppercase tracking-[0.15em] font-mono">
                 Loading...
+            </div>
+            <div class="relative ml-4">
+                <input type="text" id="searchInput" onkeyup="filterShortcuts()" placeholder="Search..." 
+                    class="w-48 px-3 py-2 bg-white/5 border border-white/10 rounded-lg text-[10px] text-white outline-none focus:border-blue-500 transition-all">
+                <i class="fa-solid fa-search absolute right-3 top-1/2 -translate-y-1/2 text-[10px] text-zinc-500"></i>
             </div>
         </div>
 
@@ -185,6 +260,41 @@
                 <input type="hidden" id="editId">
                 <input type="text" id="siteName" placeholder="Name" class="w-full p-4 bg-zinc-900 border border-white/5 text-white rounded-2xl outline-none text-sm">
                 <input type="text" id="siteUrl" placeholder="URL" class="w-full p-4 bg-zinc-900 border border-white/5 text-white rounded-2xl outline-none text-sm">
+                
+                <!-- Icon Picker -->
+                <div>
+                    <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-2 block">Icon</label>
+                    <div class="icon-picker-grid" id="iconPicker">
+                        <div class="icon-picker-option selected" data-icon="fa-link"><i class="fa-solid fa-link text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-globe"><i class="fa-solid fa-globe text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-code"><i class="fa-solid fa-code text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-gamepad"><i class="fa-solid fa-gamepad text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-book"><i class="fa-solid fa-book text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-music"><i class="fa-solid fa-music text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-video"><i class="fa-solid fa-video text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-camera"><i class="fa-solid fa-camera text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-shopping-cart"><i class="fa-solid fa-shopping-cart text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-newspaper"><i class="fa-solid fa-newspaper text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-cloud"><i class="fa-solid fa-cloud text-zinc-400"></i></div>
+                        <div class="icon-picker-option" data-icon="fa-heart"><i class="fa-solid fa-heart text-zinc-400"></i></div>
+                    </div>
+                </div>
+
+                <!-- Color Picker -->
+                <div>
+                    <label class="text-[9px] font-bold text-zinc-500 uppercase tracking-widest mb-2 block">Accent Color</label>
+                    <div class="flex gap-2" id="colorPicker">
+                        <div class="color-picker-option selected" data-color="#3b82f6" style="background: #3b82f6;"></div>
+                        <div class="color-picker-option" data-color="#ef4444" style="background: #ef4444;"></div>
+                        <div class="color-picker-option" data-color="#22c55e" style="background: #22c55e;"></div>
+                        <div class="color-picker-option" data-color="#eab308" style="background: #eab308;"></div>
+                        <div class="color-picker-option" data-color="#a855f7" style="background: #a855f7;"></div>
+                        <div class="color-picker-option" data-color="#ec4899" style="background: #ec4899;"></div>
+                        <div class="color-picker-option" data-color="#06b6d4" style="background: #06b6d4;"></div>
+                        <div class="color-picker-option" data-color="#f97316" style="background: #f97316;"></div>
+                    </div>
+                </div>
+
                 <button onclick="saveShortcut()" class="w-full py-4 btn-premium text-white font-black rounded-2xl text-[10px]">SAVE</button>
             </div>
         </div>
@@ -210,6 +320,9 @@
         let currentSpaceId = 'default';
         let currentPage = 1;
         let itemsPerPage = 12;
+        let selectedIcon = 'fa-link';
+        let selectedColor = '#3b82f6';
+        let draggedItem = null;
 
         document.addEventListener('DOMContentLoaded', () => {
             initStorage();
@@ -218,6 +331,9 @@
             calculateGrid();
             renderSpacesList();
             renderShortcuts();
+            initIconPicker();
+            initColorPicker();
+            initDragAndDrop();
             
             window.addEventListener('resize', () => {
                 calculateGrid();
@@ -274,6 +390,21 @@
         function getSpaces() { return JSON.parse(localStorage.getItem('spaces')); }
         function getShortcuts() { return JSON.parse(localStorage.getItem('shortcuts_by_space'))[currentSpaceId] || []; }
 
+        function filterShortcuts() {
+            const query = document.getElementById('searchInput').value.toLowerCase().trim();
+            const container = document.getElementById('shortcutsContainer');
+            const cards = container.querySelectorAll('.shortcut-card');
+            
+            cards.forEach(card => {
+                const name = card.querySelector('h3').innerText.toLowerCase();
+                if (name.includes(query)) {
+                    card.style.display = 'flex';
+                } else {
+                    card.style.display = 'none';
+                }
+            });
+        }
+
         function renderShortcuts() {
             const container = document.getElementById('shortcutsContainer');
             const empty = document.getElementById('emptyState');
@@ -298,8 +429,14 @@
             const pageItems = shortcuts.slice(start, start + itemsPerPage);
 
             container.innerHTML = pageItems.map(item => `
-                <div class="shortcut-card rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer group shadow-sm border border-white/5" onclick="window.open('${item.url}', '_blank')">
+                <div class="shortcut-card rounded-2xl p-6 flex flex-col items-center justify-center text-center cursor-pointer group shadow-sm border border-white/5 ${item.favorite ? 'favorite' : ''}" 
+                     onclick="window.open('${item.url}', '_blank')"
+                     draggable="true"
+                     data-id="${item.id}">
                     <div class="absolute top-2 right-2 flex gap-1">
+                        <button onclick="event.stopPropagation(); toggleFavorite(${item.id}); return false;" class="p-2 ${item.favorite ? 'text-yellow-500' : 'text-zinc-600'} hover:text-yellow-500 transition opacity-0 group-hover:opacity-100 bg-black/40 rounded-lg">
+                            <i class="fa-solid fa-star text-[8px]"></i>
+                        </button>
                         <button onclick="event.stopPropagation(); openEditModal(${item.id})" class="p-2 text-zinc-600 hover:text-white transition opacity-0 group-hover:opacity-100 bg-black/40 rounded-lg">
                             <i class="fa-solid fa-pen text-[8px]"></i>
                         </button>
@@ -307,12 +444,15 @@
                             <i class="fa-solid fa-trash text-[8px]"></i>
                         </button>
                     </div>
-                    <div class="w-10 h-10 rounded-xl bg-white/[0.03] flex items-center justify-center mb-3 group-hover:bg-blue-600/20 transition-all">
-                        <i class="fa-solid fa-link text-zinc-600 group-hover:text-blue-500"></i>
+                    <div class="w-10 h-10 rounded-xl flex items-center justify-center mb-3 transition-all" style="background: ${item.color ? item.color + '20' : 'rgba(255,255,255,0.03)'}">
+                        <i class="fa-solid ${item.icon || 'fa-link'}" style="color: ${item.color || '#9ca3af'}"></i>
                     </div>
                     <h3 class="font-bold text-zinc-200 text-[10px] uppercase tracking-widest truncate w-full px-2">${item.name}</h3>
                 </div>
             `).join('');
+
+            // Re-attach drag events after rendering
+            initDragAndDrop();
         }
 
         function nextPage() { currentPage++; renderShortcuts(); }
@@ -397,6 +537,10 @@
             document.getElementById('editId').value = '';
             document.getElementById('siteName').value = '';
             document.getElementById('siteUrl').value = '';
+            selectedIcon = 'fa-link';
+            selectedColor = '#3b82f6';
+            updateIconPickerUI();
+            updateColorPickerUI();
             document.getElementById('shortcutModal').classList.remove('hidden');
         }
 
@@ -405,7 +549,109 @@
             document.getElementById('editId').value = id;
             document.getElementById('siteName').value = item.name;
             document.getElementById('siteUrl').value = item.url;
+            selectedIcon = item.icon || 'fa-link';
+            selectedColor = item.color || '#3b82f6';
+            updateIconPickerUI();
+            updateColorPickerUI();
             document.getElementById('shortcutModal').classList.remove('hidden');
+        }
+
+        function initIconPicker() {
+            const iconOptions = document.querySelectorAll('.icon-picker-option');
+            iconOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    iconOptions.forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedIcon = option.dataset.icon;
+                });
+            });
+        }
+
+        function initColorPicker() {
+            const colorOptions = document.querySelectorAll('.color-picker-option');
+            colorOptions.forEach(option => {
+                option.addEventListener('click', () => {
+                    colorOptions.forEach(o => o.classList.remove('selected'));
+                    option.classList.add('selected');
+                    selectedColor = option.dataset.color;
+                });
+            });
+        }
+
+        function updateIconPickerUI() {
+            const iconOptions = document.querySelectorAll('.icon-picker-option');
+            iconOptions.forEach(option => {
+                option.classList.toggle('selected', option.dataset.icon === selectedIcon);
+            });
+        }
+
+        function updateColorPickerUI() {
+            const colorOptions = document.querySelectorAll('.color-picker-option');
+            colorOptions.forEach(option => {
+                option.classList.toggle('selected', option.dataset.color === selectedColor);
+            });
+        }
+
+        function toggleFavorite(id) {
+            const store = JSON.parse(localStorage.getItem('shortcuts_by_space'));
+            let list = store[currentSpaceId];
+            list = list.map(s => s.id === id ? {...s, favorite: !s.favorite} : s);
+            store[currentSpaceId] = list;
+            localStorage.setItem('shortcuts_by_space', JSON.stringify(store));
+            renderShortcuts();
+            showToast("Updated");
+        }
+
+        function initDragAndDrop() {
+            const cards = document.querySelectorAll('.shortcut-card[draggable="true"]');
+            
+            cards.forEach(card => {
+                card.addEventListener('dragstart', handleDragStart);
+                card.addEventListener('dragover', handleDragOver);
+                card.addEventListener('drop', handleDrop);
+                card.addEventListener('dragend', handleDragEnd);
+            });
+        }
+
+        function handleDragStart(e) {
+            draggedItem = this;
+            this.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', this.dataset.id);
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.dataTransfer.dropEffect = 'move';
+            return false;
+        }
+
+        function handleDrop(e) {
+            e.preventDefault();
+            if (draggedItem !== this) {
+                const fromId = parseInt(draggedItem.dataset.id);
+                const toId = parseInt(this.dataset.id);
+                
+                const store = JSON.parse(localStorage.getItem('shortcuts_by_space'));
+                let list = store[currentSpaceId];
+                
+                const fromIndex = list.findIndex(s => s.id === fromId);
+                const toIndex = list.findIndex(s => s.id === toId);
+                
+                if (fromIndex !== -1 && toIndex !== -1) {
+                    const [removed] = list.splice(fromIndex, 1);
+                    list.splice(toIndex, 0, removed);
+                    store[currentSpaceId] = list;
+                    localStorage.setItem('shortcuts_by_space', JSON.stringify(store));
+                    renderShortcuts();
+                }
+            }
+            return false;
+        }
+
+        function handleDragEnd() {
+            this.classList.remove('dragging');
+            draggedItem = null;
         }
 
         function closeModal() { document.getElementById('shortcutModal').classList.add('hidden'); }
@@ -420,9 +666,9 @@
             const store = JSON.parse(localStorage.getItem('shortcuts_by_space'));
             let list = store[currentSpaceId];
             if (id) {
-                list = list.map(s => s.id == id ? {...s, name, url} : s);
+                list = list.map(s => s.id == id ? {...s, name, url, icon: selectedIcon, color: selectedColor} : s);
             } else {
-                list.push({ id: Date.now(), name, url });
+                list.push({ id: Date.now(), name, url, icon: selectedIcon, color: selectedColor, favorite: false });
             }
             store[currentSpaceId] = list;
             localStorage.setItem('shortcuts_by_space', JSON.stringify(store));
