@@ -1,1 +1,12 @@
-Nothing should be ignored since only a source file (index.html) was modified and no build artifacts, dependencies, or temporary files were present in the changes.
+```
+# Temporary files
+*.tmp
+
+# Environment files
+.env
+.env.local
+.env.*
+
+# Logs
+*.log
+```
